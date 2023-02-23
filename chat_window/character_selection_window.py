@@ -1,6 +1,7 @@
 import tkinter
 import tkinter.filedialog
 import tkinter.messagebox
+import tkinter.simpledialog
 import PIL.Image
 import PIL.ImageTk
 import io
@@ -150,14 +151,14 @@ class CharacterListbox:
         self.cur_select = frame
         self.on_select_callback(frame.people, is_main)
 
-class CreateCharWindow:
-    def __init__(self, callback):
-        self.root = tkinter.Toplevel()
-        self.root.title("Add Character")
-        self.root.wm_geometry("300x300")
-        self.root.wm_attributes("-type", "menu")
-        self.create_hint_label = tkinter.Label(self.root, text="Create new character")
-        self.profile_photo_frame = tkinter.Frame(self.root)
+class CreateCharWindow(tkinter.simpledialog.Dialog):
+    def body(self, master):
+        self.name = None
+        self.title("Add Character")
+        self.wm_geometry("500x300")
+        self.wm_resizable(False, False)
+        self.create_hint_label = tkinter.Label(self, text="Create new character", font=("", 20, ""), relief=tkinter.SOLID)
+        self.profile_photo_frame = tkinter.Frame(self, height=100)
         self.profile_photo = DEFAULT_PROFILE_PHOTO
         self.orig_profile_photo_obj = PIL.Image.open(self.profile_photo)
         self.profile_photo_obj = PIL.ImageTk.PhotoImage(self.orig_profile_photo_obj)
@@ -167,24 +168,35 @@ class CreateCharWindow:
             command=self.choose_photo
         )
         self.profile_photo_button.bind("<Configure>", self.on_window_size_change)
-        self.profile_photo_label = tkinter.Label(self.profile_photo_frame, text="Character photo")
-        self.name_frame = tkinter.Frame(self.root)
+        self.profile_photo_label = tkinter.Label(self.profile_photo_frame, text="Character photo", font=("", 14, ""))
+        self.name_frame = tkinter.Frame(self, height=100)
         self.name_entry = tkinter.Entry(self.name_frame)
-        self.name_label = tkinter.Label(self.name_frame, text="Character name")
-        self.ok_button = tkinter.Button(self.root, command=self.ok_callback, text="OK")
-        self.can_button = tkinter.Button(self.root, command=self.root.destroy, text="Cancel")
-        self.callback = callback
+        self.name_label = tkinter.Label(self.name_frame, text="Character name", font=("", 14, ""))
 
-    def show(self):
-        self.create_hint_label.place(anchor=tkinter.N, relx=0.5, relheight=0.2, relwidth=1)
-        self.profile_photo_frame.place(x=0, rely=0.2, relwidth=1, relheight=0.3)
+        #self.create_hint_label.place(anchor=tkinter.N, relx=0.5, relheight=0.2, relwidth=1)
+        self.create_hint_label.pack(anchor=tkinter.N, expand=True, fill=tkinter.X)
+        #self.profile_photo_frame.place(x=0, rely=0.2, relwidth=1, relheight=0.3)
+        self.profile_photo_frame.pack(expand=True, fill=tkinter.X)
         self.profile_photo_button.place(x=0, y=0, relwidth=0.2, relheight=1)
         self.profile_photo_label.place(relx=0.2, y=0, relwidth=0.8, relheight=1)
-        self.name_frame.place(x=0, rely=0.5, relwidth=1, relheight=0.3)
+        #self.name_frame.place(x=0, rely=0.5, relwidth=1, relheight=0.3)
+        self.name_frame.pack(expand=True, fill=tkinter.X)
         self.name_entry.place(x=0, y=0, relwidth=0.6, relheight=1)
         self.name_label.place(relx=0.6, y=0, relwidth=0.4, relheight=1)
-        self.ok_button.place(x=0, rely=0.8, relwidth=0.5, relheight=0.2)
-        self.can_button.place(relx=0.5, rely=0.8, relwidth=0.5, relheight=0.2)
+
+        return self.name_entry
+
+    def validate(self):
+        if not self.name_entry.get():
+            tkinter.messagebox.showerror(
+                message="Please input character name",
+                parent=self
+            )
+            return False
+
+        self.name = self.name_entry.get()
+        self.photo = self.profile_photo
+        return True
 
     def choose_photo(self):
         self.profile_photo = tkinter.filedialog.askopenfile(
@@ -193,24 +205,13 @@ class CreateCharWindow:
                 ("PNG file", "*.png"),
                 ("JPEG file", "*.jpg")
             ],
-            parent=self.root
+            parent=self
         ) or DEFAULT_PROFILE_PHOTO
         self.orig_profile_photo_obj = PIL.Image.open(self.profile_photo)
         self.profile_photo_obj = PIL.ImageTk.PhotoImage(self.orig_profile_photo_obj)
         self.profile_photo_button.configure(
             image=self.profile_photo_obj
         )
-
-    def ok_callback(self):
-        if not self.name_entry.get():
-            tkinter.messagebox.showerror(
-                message="Please input character name",
-                parent=self.root
-            )
-            return
-
-        self.callback(self.name_entry.get(), self.profile_photo)
-        self.root.destroy()
 
     def on_window_size_change(self, event: tkinter.Event):
         self.profile_photo_obj = (
@@ -224,15 +225,89 @@ class CreateCharWindow:
         )
         self.profile_photo_button.configure(image=self.profile_photo_obj)
 
+
+##class CreateCharWindow:
+##    def __init__(self, callback):
+##        self.root = tkinter.Toplevel()
+##        self.root.title("Add Character")
+##        self.root.wm_geometry("500x300")
+##        self.root.wm_attributes("-type", "menu")
+##        self.root.wm_resizable(False, False)
+##        self.create_hint_label = tkinter.Label(self.root, text="Create new character", font=("", 20, ""))
+##        self.profile_photo_frame = tkinter.Frame(self.root)
+##        self.profile_photo = DEFAULT_PROFILE_PHOTO
+##        self.orig_profile_photo_obj = PIL.Image.open(self.profile_photo)
+##        self.profile_photo_obj = PIL.ImageTk.PhotoImage(self.orig_profile_photo_obj)
+##        self.profile_photo_button = tkinter.Button(
+##            self.profile_photo_frame,
+##            image=self.profile_photo_obj,
+##            command=self.choose_photo
+##        )
+##        self.profile_photo_button.bind("<Configure>", self.on_window_size_change)
+##        self.profile_photo_label = tkinter.Label(self.profile_photo_frame, text="Character photo")
+##        self.name_frame = tkinter.Frame(self.root)
+##        self.name_entry = tkinter.Entry(self.name_frame)
+##        self.name_label = tkinter.Label(self.name_frame, text="Character name")
+##        self.ok_button = tkinter.Button(self.root, command=self.ok_callback, text="OK")
+##        self.can_button = tkinter.Button(self.root, command=self.root.destroy, text="Cancel")
+##        self.callback = callback
+##
+##    def show(self):
+##        self.create_hint_label.place(anchor=tkinter.N, relx=0.5, relheight=0.2, relwidth=1)
+##        self.profile_photo_frame.place(x=0, rely=0.2, relwidth=1, relheight=0.3)
+##        self.profile_photo_button.place(x=0, y=0, relwidth=0.2, relheight=1)
+##        self.profile_photo_label.place(relx=0.2, y=0, relwidth=0.8, relheight=1)
+##        self.name_frame.place(x=0, rely=0.5, relwidth=1, relheight=0.3)
+##        self.name_entry.place(x=0, y=0, relwidth=0.6, relheight=1)
+##        self.name_label.place(relx=0.6, y=0, relwidth=0.4, relheight=1)
+##        self.ok_button.place(x=0, rely=0.8, relwidth=0.5, relheight=0.2)
+##        self.can_button.place(relx=0.5, rely=0.8, relwidth=0.5, relheight=0.2)
+##
+##    def choose_photo(self):
+##        self.profile_photo = tkinter.filedialog.askopenfile(
+##            "rb",
+##            filetypes=[
+##                ("PNG file", "*.png"),
+##                ("JPEG file", "*.jpg")
+##            ],
+##            parent=self.root
+##        ) or DEFAULT_PROFILE_PHOTO
+##        self.orig_profile_photo_obj = PIL.Image.open(self.profile_photo)
+##        self.profile_photo_obj = PIL.ImageTk.PhotoImage(self.orig_profile_photo_obj)
+##        self.profile_photo_button.configure(
+##            image=self.profile_photo_obj
+##        )
+##
+##    def ok_callback(self):
+##        if not self.name_entry.get():
+##            tkinter.messagebox.showerror(
+##                message="Please input character name",
+##                parent=self.root
+##            )
+##            return
+##
+##        self.callback(self.name_entry.get(), self.profile_photo)
+##        self.root.destroy()
+##
+##    def on_window_size_change(self, event: tkinter.Event):
+##        self.profile_photo_obj = (
+##            PIL.ImageTk.PhotoImage(
+##                self.orig_profile_photo_obj
+##                .resize(
+##                    (event.width, event.height),
+##                    PIL.Image.Resampling.BOX
+##                )
+##            )
+##        )
+##        self.profile_photo_button.configure(image=self.profile_photo_obj)
+
 class CharSelectionWindow:
     def __init__(self, root: tkinter.Tk, chat_window: ChatWindow):
         self.root = tkinter.Toplevel()
         self.root.title("Character Selection/Modification Window")
         self.root.wm_attributes("-type", "menu")
         self.root.wm_geometry("300x300")
-        #self.root.wm_overrideredirect(True)
         self.root.wm_state("withdrawn")
-        #self.root.transient(root)
         self.root.protocol("WM_DELETE_WINDOW", self.hide_self)
         self.character_label = tkinter.Label(self.root, text="Currently selected: ()")
         self.character_listbox = CharacterListbox(self.root, self.on_selectchar)
@@ -256,7 +331,7 @@ class CharSelectionWindow:
             text="Show characters selection window"
         )
         self.root.wm_state("withdrawn")
-        
+
 
     def show(self):
         self.character_label.place(x=0, y=0, relwidth=1, relheight=0.1)
@@ -280,7 +355,7 @@ class CharSelectionWindow:
                 self.main_char.remove(people)
             except ValueError:
                 pass
-        
+
         for message in self.chat_window.messages:
             if message.people in self.main_char:
                 message.to_main()
@@ -314,11 +389,14 @@ class CharSelectionWindow:
         self.bottom_bar.set_character(None, False)
 
     def add_character(self):
-        CreateCharWindow(self.add_character_callback).show()
+        c = CreateCharWindow(self.root)
+        if c.name is None: return
 
-    def add_character_callback(self, name: str, photo: io.BufferedReader | io.BytesIO):
-        if name in global_characters:
+        if c.name in global_characters:
             tkinter.messagebox.showerror(message="Duplicate character for: %s" % name)
             return
-        
+
+        self.character_listbox.add_char(Character(c.name, c.photo))
+
+    def _internal_add_character(self, name, photo):
         self.character_listbox.add_char(Character(name, photo))

@@ -1,5 +1,7 @@
 import tkinter
 import tkinter.filedialog
+import tkinter.messagebox
+import traceback
 import gzip
 import base64
 import io
@@ -12,23 +14,22 @@ from ..chat_window.main_chat_window import ChatWindow
 # The saved chat xml is as follows:
 # <chat_simulation_data>
 #     <characters>
-#         <character>
-#             <name>TEST 1</name>
-#             <profile_photo>
-#                 <!-- profile photo, gzip compressed, base64 encoded -->
-#             </profile_photo>
-#         </character>
+#         <!-- profile photo is gzip compressed, base64 encoded -->
+#         <character name="TEST 1" profile_photo="..."/>
 #         ......
-#         <current_select>TEST 1</current_select>
-#         <mains>
-#             <name>TEST 1</name> <!-- must be one of the character above -->
+#
+#         <!-- optional, if exist, then must be one of the character above -->
+#         <current_select name="TEST 1"/>
+#
+#         <main_character>
+#             <character name="TEST 1"/> <!-- must be one of the character above -->
 #             ......
-#         </mains>
+#         </main_character>
 #     </characters>
+#
 #     <messages>
-#         <message>
-#             <sender>TEST 1</sender> <!-- must be one of the character above -->
-#             <content>hello world</content>
+#         <message sender="TEST 1"> <!-- must be one of the character above -->
+#             hello world <!-- content -->
 #         </message>
 #         ......
 #     </messages>
@@ -57,38 +58,45 @@ class SaveTool:
             ]
         )
         if not write_file: return
-        
+
         root_element = ElementTree.Element("chat_simulation_data")
         xml_tree = ElementTree.ElementTree(root_element)
 
         characters_element = ElementTree.SubElement(root_element, "characters")
         for character in global_characters.values():
             character_element = ElementTree.SubElement(characters_element, "character")
-            name_element = ElementTree.SubElement(character_element, "name")
-            name_element.text = character.name
-            profile_photo_element = ElementTree.SubElement(character_element, "profile_photo")
+            character_element.set("name", character.name)
             character.profile_photo.seek(0, io.SEEK_SET)
-            profile_photo_element.text = base64.b64encode(gzip.compress(character.profile_photo.read(), 9)).decode()
+            character_element.set("profile_photo", base64.b64encode(gzip.compress(character.profile_photo.read(), 9)).decode())
 
         current_select_element = ElementTree.SubElement(characters_element, "current_select")
         if self.char_selection_window.character_listbox.cur_select:
-            current_select_element.text = self.char_selection_window.character_listbox.cur_select.people.name
+            current_select_element.set("name", self.char_selection_window.character_listbox.cur_select.people.name)
 
-        mains_element = ElementTree.SubElement(characters_element, "mains")
+        mains_element = ElementTree.SubElement(characters_element, "main_character")
+
         for main in self.char_selection_window.main_char:
-            main_name_element = ElementTree.SubElement(mains_element, "name")
-            main_name_element.text = main.name
+            main_name_element = ElementTree.SubElement(mains_element, "character")
+            main_name_element.set("name", main.name)
 
         messages_element = ElementTree.SubElement(root_element, "messages")
         for message in self.chat_window.messages:
             message_element = ElementTree.SubElement(messages_element, "message")
-            sender_element = ElementTree.SubElement(message_element, "sender")
-            sender_element.text = message.people.name
-            content_element = ElementTree.SubElement(message_element, "content")
-            content_element.text = message.content
+            message_element.set("sender", message.people.name)
+            message_element.text = message.content
 
-        ElementTree.indent(xml_tree, space='    ')
-        xml_tree.write(write_file, encoding="unicode", xml_declaration=True)
+        ElementTree.indent(xml_tree, space="    ")
+        try:
+            xml_tree.write(write_file, encoding="unicode", xml_declaration=True)
+        except:
+            tkinter.messagebox.showerror(
+                title="Error while saving chat",
+                message="Error occurred while saving chat.\n"
+                        "The full traceback is:\n" +
+                        traceback.format_exc()
+            )
+        else:
+            tkinter.messagebox.showinfo(message="Chat saved to %s." % write_file.name)
 
     def load(self):
         read_file = tkinter.filedialog.askopenfile(
@@ -104,39 +112,52 @@ class SaveTool:
             character.selection_button.invoke()
             self.char_selection_window._del_character()
 
-        xml_tree = ElementTree.parse(read_file)
-        current_select_name = xml_tree.find("characters").find("current_select").text
+        try:
+            xml_tree = ElementTree.parse(read_file)
+        except:
+            tkinter.messagebox.showerror(
+                title="Error while loading chat",
+                message="Error occurred while loading chat.\n"
+                        "The full traceback is:\n" +
+                        traceback.format_exc()
+            )
+            return
+
+        current_select_name = xml_tree.find("characters").find("current_select").get("name")
         for character in xml_tree.find("characters").iterfind("character"):
-            name = character.find("name").text
-            profile_photo = io.BytesIO(gzip.decompress(base64.b64decode(character.find("profile_photo").text)))
+            name = character.get("name")
+            profile_photo = io.BytesIO(gzip.decompress(base64.b64decode(character.get("profile_photo"))))
             if name in global_characters:
                 tkinter.messagebox.showerror(message="Duplicate character: %s" % name)
                 continue
 
-            self.char_selection_window.add_character_callback(name, profile_photo)
+            self.char_selection_window._internal_add_character(name, profile_photo)
             if current_select_name == name:
                 self.char_selection_window.on_selectchar(global_characters[current_select_name], False)
 
-        mains_name = [i.text for i in xml_tree.find("characters").find("mains").iterfind("name")]
+        main_character_name = [i.get("name")
+                               for i in xml_tree.find("characters").find("main_character").iterfind("character")]
 
         for char in self.char_selection_window.character_listbox.characters:
-            if char.people.name in mains_name:
+            if char.people.name in main_character_name:
                 char.on_select_main()
 
         for char in self.char_selection_window.character_listbox.characters:
             if char.people.name == current_select_name:
-                if global_characters[current_select_name] in mains_name:
+                if global_characters[current_select_name].name in main_character_name:
                     char.on_select_main()
                 else:
                     char.on_select()
                 break
-        
+
         for message in xml_tree.find("messages").iterfind("message"):
-            sender = message.find("sender").text
-            content = message.find("content").text
+            sender = message.get("sender")
+            content = message.text
             if sender not in global_characters:
                 tkinter.messagebox.showerror(message="Character not found: %s" % sender)
                 continue
 
             self.chat_window.add_msg(global_characters[sender], content,
                                      global_characters[sender] in self.char_selection_window.main_char)
+
+        tkinter.messagebox.showinfo(message="Chat loaded from %s." % read_file.name)

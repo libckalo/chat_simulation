@@ -107,5 +107,5 @@ class NinePNG:
         ret.paste(bottomhorizontal_scale, (self.top_patch[0], self.left_patch[0] + leftvertical_scale.height))
         ret.paste(rightbottom_orig, (self.top_patch[0] + bottomhorizontal_scale.width, self.left_patch[0] + leftvertical_scale.height))
         ret = ret.crop((1, 1, ret.width, ret.height))
-        
+
         return ret
