@@ -14,10 +14,14 @@ class ChatBottomBar:
         self.character_photo_tkimage = None
         self.show_character_window_button = tkinter.Button(
             self.main_frame, command=self.show_character_window,
-            text="Show characters selection window"#, image=self.character_photo
+            text="Show characters selection window", wraplength=root.winfo_width() * 0.1
         )
         self.message_textbox = tkinter.Text(self.main_frame, wrap="word")
-        self.send_button = tkinter.Button(self.main_frame, command=self.send, text="Send")
+        self.message_textbox.bind("<Control-Return>", self.send)
+        self.send_button = tkinter.Button(
+            self.main_frame, command=self.send, text="Send (Ctrl+Enter)",
+            wraplength=root.winfo_width() * 0.1
+        )
         self.main_chat_window = main_chat_window
         self.char_selection_window = char_selection_window
         self.character = None
@@ -38,6 +42,9 @@ class ChatBottomBar:
                 image=self.character_photo_tkimage
             )
         self.show_character_window_button.configure(
+            wraplength=event.width * 0.1
+        )
+        self.send_button.configure(
             wraplength=event.width * 0.1
         )
 
@@ -83,8 +90,8 @@ class ChatBottomBar:
                 image=""
             )
 
-    def send(self):
-        message = self.message_textbox.get("0.0", "end")[:-1] # there's a trailing '\n'
+    def send(self, dummy=None):
+        message = self.message_textbox.get("0.0", tkinter.END)[:-1] # there's a trailing '\n'
         if not message:
             tkinter.messagebox.showerror(message="Cannot send empty message")
             return
@@ -93,4 +100,4 @@ class ChatBottomBar:
             return
 
         self.main_chat_window.add_msg(self.character, message, self.is_main)
-        self.message_textbox.delete("0.0", "end")
+        self.message_textbox.delete("0.0", tkinter.END)

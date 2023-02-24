@@ -168,10 +168,10 @@ class CreateCharWindow(tkinter.simpledialog.Dialog):
             command=self.choose_photo
         )
         self.profile_photo_button.bind("<Configure>", self.on_window_size_change)
-        self.profile_photo_label = tkinter.Label(self.profile_photo_frame, text="Character photo", font=("", 14, ""))
+        self.profile_photo_label = tkinter.Label(self.profile_photo_frame, text="Character photo", font=("", 12, ""))
         self.name_frame = tkinter.Frame(self, height=100)
         self.name_entry = tkinter.Entry(self.name_frame)
-        self.name_label = tkinter.Label(self.name_frame, text="Character name", font=("", 14, ""))
+        self.name_label = tkinter.Label(self.name_frame, text="Character name", font=("", 12, ""))
 
         #self.create_hint_label.place(anchor=tkinter.N, relx=0.5, relheight=0.2, relwidth=1)
         self.create_hint_label.pack(anchor=tkinter.N, expand=True, fill=tkinter.X)
@@ -224,82 +224,6 @@ class CreateCharWindow(tkinter.simpledialog.Dialog):
             )
         )
         self.profile_photo_button.configure(image=self.profile_photo_obj)
-
-
-##class CreateCharWindow:
-##    def __init__(self, callback):
-##        self.root = tkinter.Toplevel()
-##        self.root.title("Add Character")
-##        self.root.wm_geometry("500x300")
-##        self.root.wm_attributes("-type", "menu")
-##        self.root.wm_resizable(False, False)
-##        self.create_hint_label = tkinter.Label(self.root, text="Create new character", font=("", 20, ""))
-##        self.profile_photo_frame = tkinter.Frame(self.root)
-##        self.profile_photo = DEFAULT_PROFILE_PHOTO
-##        self.orig_profile_photo_obj = PIL.Image.open(self.profile_photo)
-##        self.profile_photo_obj = PIL.ImageTk.PhotoImage(self.orig_profile_photo_obj)
-##        self.profile_photo_button = tkinter.Button(
-##            self.profile_photo_frame,
-##            image=self.profile_photo_obj,
-##            command=self.choose_photo
-##        )
-##        self.profile_photo_button.bind("<Configure>", self.on_window_size_change)
-##        self.profile_photo_label = tkinter.Label(self.profile_photo_frame, text="Character photo")
-##        self.name_frame = tkinter.Frame(self.root)
-##        self.name_entry = tkinter.Entry(self.name_frame)
-##        self.name_label = tkinter.Label(self.name_frame, text="Character name")
-##        self.ok_button = tkinter.Button(self.root, command=self.ok_callback, text="OK")
-##        self.can_button = tkinter.Button(self.root, command=self.root.destroy, text="Cancel")
-##        self.callback = callback
-##
-##    def show(self):
-##        self.create_hint_label.place(anchor=tkinter.N, relx=0.5, relheight=0.2, relwidth=1)
-##        self.profile_photo_frame.place(x=0, rely=0.2, relwidth=1, relheight=0.3)
-##        self.profile_photo_button.place(x=0, y=0, relwidth=0.2, relheight=1)
-##        self.profile_photo_label.place(relx=0.2, y=0, relwidth=0.8, relheight=1)
-##        self.name_frame.place(x=0, rely=0.5, relwidth=1, relheight=0.3)
-##        self.name_entry.place(x=0, y=0, relwidth=0.6, relheight=1)
-##        self.name_label.place(relx=0.6, y=0, relwidth=0.4, relheight=1)
-##        self.ok_button.place(x=0, rely=0.8, relwidth=0.5, relheight=0.2)
-##        self.can_button.place(relx=0.5, rely=0.8, relwidth=0.5, relheight=0.2)
-##
-##    def choose_photo(self):
-##        self.profile_photo = tkinter.filedialog.askopenfile(
-##            "rb",
-##            filetypes=[
-##                ("PNG file", "*.png"),
-##                ("JPEG file", "*.jpg")
-##            ],
-##            parent=self.root
-##        ) or DEFAULT_PROFILE_PHOTO
-##        self.orig_profile_photo_obj = PIL.Image.open(self.profile_photo)
-##        self.profile_photo_obj = PIL.ImageTk.PhotoImage(self.orig_profile_photo_obj)
-##        self.profile_photo_button.configure(
-##            image=self.profile_photo_obj
-##        )
-##
-##    def ok_callback(self):
-##        if not self.name_entry.get():
-##            tkinter.messagebox.showerror(
-##                message="Please input character name",
-##                parent=self.root
-##            )
-##            return
-##
-##        self.callback(self.name_entry.get(), self.profile_photo)
-##        self.root.destroy()
-##
-##    def on_window_size_change(self, event: tkinter.Event):
-##        self.profile_photo_obj = (
-##            PIL.ImageTk.PhotoImage(
-##                self.orig_profile_photo_obj
-##                .resize(
-##                    (event.width, event.height),
-##                    PIL.Image.Resampling.BOX
-##                )
-##            )
-##        )
-##        self.profile_photo_button.configure(image=self.profile_photo_obj)
 
 class CharSelectionWindow:
     def __init__(self, root: tkinter.Tk, chat_window: ChatWindow):
