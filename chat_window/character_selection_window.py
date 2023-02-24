@@ -229,7 +229,6 @@ class CharSelectionWindow:
     def __init__(self, root: tkinter.Tk, chat_window: ChatWindow):
         self.root = tkinter.Toplevel()
         self.root.title("Character Selection/Modification Window")
-        self.root.wm_attributes("-type", "menu")
         self.root.wm_geometry("300x300")
         self.root.wm_state("withdrawn")
         self.root.protocol("WM_DELETE_WINDOW", self.hide_self)

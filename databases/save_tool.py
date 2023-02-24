@@ -10,26 +10,28 @@ from .character_database import characters as global_characters
 from .character_database import Character
 from ..chat_window.character_selection_window import CharSelectionWindow
 from ..chat_window.main_chat_window import ChatWindow
+from ..chat_window.single_chat_msg import SingleTextMsg, SinglePhotoMsg
 
 # The saved chat xml is as follows:
 # <chat_simulation_data>
 #     <characters>
-#         <!-- profile photo is gzip compressed, base64 encoded -->
+#         <!-- profile photo is gzip-compressed, base64-encoded -->
 #         <character name="TEST 1" profile_photo="..."/>
 #         ......
 #
-#         <!-- optional, if exist, then must be one of the character above -->
+#         <!-- optional -->
 #         <current_select name="TEST 1"/>
 #
 #         <main_character>
-#             <character name="TEST 1"/> <!-- must be one of the character above -->
+#             <character name="TEST 1"/>
 #             ......
 #         </main_character>
 #     </characters>
 #
 #     <messages>
-#         <message sender="TEST 1"> <!-- must be one of the character above -->
-#             hello world <!-- content -->
+#         <message sender="TEST 1" type="{text|photo}">
+#             hello world <!-- content
+#                         (when type == photo, the photo is encoded the same as profile photo -->
 #         </message>
 #         ......
 #     </messages>
@@ -51,12 +53,22 @@ class SaveTool:
         )
 
     def save(self):
-        write_file = tkinter.filedialog.asksaveasfile(
-            initialfile="chat.xml",
-            filetypes=[
-                ("XML file", "*.xml")
-            ]
-        )
+        try:
+            write_file = tkinter.filedialog.asksaveasfile(
+                initialfile="chat.xml",
+                filetypes=[
+                    ("XML file", "*.xml")
+                ]
+            )
+        except:
+            tkinter.messagebox.showerror(
+                title="Error while saving chat",
+                message="Error occurred while saving chat.\n"
+                        "The full traceback is:\n" +
+                        traceback.format_exc()
+            )
+            return
+
         if not write_file: return
 
         root_element = ElementTree.Element("chat_simulation_data")
@@ -83,27 +95,34 @@ class SaveTool:
         for message in self.chat_window.messages:
             message_element = ElementTree.SubElement(messages_element, "message")
             message_element.set("sender", message.people.name)
-            message_element.text = message.content
+            if isinstance(message, SingleTextMsg):
+                message_element.set("type", "text")
+                message_element.text = message.content
+            elif isinstance(message, SinglePhotoMsg):
+                message_element.set("type", "photo")
+                message.content.seek(0, io.SEEK_SET)
+                message_element.text = base64.b64encode(gzip.compress(message.content.read(), 9)).decode()
 
         ElementTree.indent(xml_tree, space="    ")
+        xml_tree.write(write_file, encoding="unicode", xml_declaration=True)
+        tkinter.messagebox.showinfo(message="Chat saved to %s." % write_file.name)
+
+    def load(self):
         try:
-            xml_tree.write(write_file, encoding="unicode", xml_declaration=True)
+            read_file = tkinter.filedialog.askopenfile(
+                filetypes=[
+                    ("XML file", "*.xml")
+                ]
+            )
         except:
             tkinter.messagebox.showerror(
-                title="Error while saving chat",
-                message="Error occurred while saving chat.\n"
+                title="Error while loading chat",
+                message="Error occurred while loading chat.\n"
                         "The full traceback is:\n" +
                         traceback.format_exc()
             )
-        else:
-            tkinter.messagebox.showinfo(message="Chat saved to %s." % write_file.name)
+            return
 
-    def load(self):
-        read_file = tkinter.filedialog.askopenfile(
-            filetypes=[
-                ("XML file", "*.xml")
-            ]
-        )
         if not read_file: return
 
         for message in self.chat_window.messages:
@@ -152,12 +171,17 @@ class SaveTool:
 
         for message in xml_tree.find("messages").iterfind("message"):
             sender = message.get("sender")
-            content = message.text
             if sender not in global_characters:
                 tkinter.messagebox.showerror(message="Character not found: %s" % sender)
                 continue
 
-            self.chat_window.add_msg(global_characters[sender], content,
-                                     global_characters[sender] in self.char_selection_window.main_char)
+            if message.get("type") == "text":
+                content = message.text
+                self.chat_window.add_msg_text(global_characters[sender], content,
+                                         global_characters[sender] in self.char_selection_window.main_char)
+            elif message.get("type") == "photo":
+                content = io.BytesIO(gzip.decompress(base64.b64decode(message.text)))
+                self.chat_window.add_msg_photo(global_characters[sender], content,
+                                         global_characters[sender] in self.char_selection_window.main_char)
 
         tkinter.messagebox.showinfo(message="Chat loaded from %s." % read_file.name)

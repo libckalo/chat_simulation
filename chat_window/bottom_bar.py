@@ -1,7 +1,9 @@
 import tkinter
 import tkinter.messagebox
+import tkinter.filedialog
 import PIL.Image
 import PIL.ImageTk
+import PIL.ImageOps
 from .main_chat_window import ChatWindow
 #from .character_selection_window import CharSelectionWindow
 from ..databases.character_database import Character
@@ -20,7 +22,11 @@ class ChatBottomBar:
         self.message_textbox.bind("<Control-Return>", self.send)
         self.send_button = tkinter.Button(
             self.main_frame, command=self.send, text="Send (Ctrl+Enter)",
-            wraplength=root.winfo_width() * 0.1
+            wraplength=root.winfo_width() * 0.05
+        )
+        self.send_photo_button = tkinter.Button(
+            self.main_frame, command=self.send_photo, text="Send\nphoto...",
+            wraplength=root.winfo_width() * 0.05
         )
         self.main_chat_window = main_chat_window
         self.char_selection_window = char_selection_window
@@ -64,8 +70,9 @@ class ChatBottomBar:
 
     def show(self):
         self.show_character_window_button.place(x=0, y=0, relwidth=0.1, relheight=1)
-        self.message_textbox.place(relx=0.1, y=0, relwidth=0.9, relheight=1)
-        self.send_button.place(relx=0.9, y=0, relwidth=0.1, relheight=1)
+        self.message_textbox.place(relx=0.1, y=0, relwidth=0.8, relheight=1)
+        self.send_button.place(relx=0.8, y=0, relwidth=0.1, relheight=1)
+        self.send_photo_button.place(relx=0.9, y=0, relwidth=0.1, relheight=1)
         self.main_frame.place(x=0, rely=0.85, relwidth=1, relheight=0.15)
 
     def set_character(self, people: Character, is_main: bool):
@@ -76,7 +83,7 @@ class ChatBottomBar:
             self.character_photo_tkimage = (
                 PIL.ImageTk.PhotoImage(
                     self.character_photo.resize(
-                        (int(self.main_frame.winfo_width() * 0.1),
+                        (self.main_frame.winfo_width() // 10,
                          self.main_frame.winfo_height()),
                         PIL.Image.Resampling.BOX
                     )
@@ -99,5 +106,22 @@ class ChatBottomBar:
             tkinter.messagebox.showerror(message="No character selected")
             return
 
-        self.main_chat_window.add_msg(self.character, message, self.is_main)
+        self.main_chat_window.add_msg_text(self.character, message, self.is_main)
         self.message_textbox.delete("0.0", tkinter.END)
+
+    def send_photo(self):
+        if self.character is None:
+            tkinter.messagebox.showerror(message="No character selected")
+            return
+
+        photo = tkinter.filedialog.askopenfile(
+            "rb",
+            filetypes=[
+                ("PNG file", "*.png"),
+                ("JPEG file", "*.jpg")
+            ],
+            parent=self.main_frame
+        )
+        if not photo: return
+
+        self.main_chat_window.add_msg_photo(self.character, photo, self.is_main)

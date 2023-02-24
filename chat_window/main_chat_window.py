@@ -1,5 +1,6 @@
 import tkinter
-from .single_chat_msg import SingleChatMsg
+import io
+from .single_chat_msg import SingleTextMsg, SinglePhotoMsg
 from ..databases.character_database import Character
 
 CHAT_BACKGROUND_COLOR = "#EEE"
@@ -11,8 +12,17 @@ class ChatWindow:
         self.scroll_bar = tkinter.Scrollbar(
             root, orient=tkinter.VERTICAL, command=self.main_canvas.yview
         )
+        self.main_canvas.bind("<Button-4>", self.scroll)
+        self.main_canvas.bind("<Button-5>", self.scroll)
+        self.main_canvas.bind("<MouseWheel>", self.scroll)
         self.main_canvas.configure(yscrollcommand=self.scroll_bar.set)
         self.messages = []
+
+    def scroll(self, event: tkinter.Event):
+        if event.num == 4 or event.delta == -120:
+            self.main_canvas.yview_scroll(-1, "units")
+        elif event.num == 5 or event.delta == 120:
+            self.main_canvas.yview_scroll(1, "units")
 
     def update_scroll(self):
         self.main_canvas.configure(
@@ -25,8 +35,12 @@ class ChatWindow:
     def on_size_change(self, event: tkinter.Event):
         for index, omsg in enumerate(self.messages):
             omsg._current_y = 0 if not index else (self.messages[index - 1].location[1])
-            omsg.top_location = (0, self.main_canvas.bbox(omsg.msg_bg_label)[1])
-            omsg.location = (0, self.main_canvas.bbox(omsg.msg_bg_label)[3] + 20)
+            if isinstance(omsg, SingleTextMsg):
+                omsg.top_location = (0, self.main_canvas.bbox(omsg.msg_bg_label)[1])
+                omsg.location = (0, self.main_canvas.bbox(omsg.msg_bg_label)[3] + 20)
+            elif isinstance(omsg, SinglePhotoMsg):
+                omsg.top_location = (0, self.main_canvas.bbox(omsg.msg_photo)[1])
+                omsg.location = (0, self.main_canvas.bbox(omsg.msg_photo)[3] + 20)
             if omsg.is_main:
                 omsg.to_main()
             else:
@@ -37,8 +51,8 @@ class ChatWindow:
         self.main_canvas.place(x=0, y=0, relwidth=0.97, relheight=0.85)
         self.scroll_bar.place(relx=0.97, y=0, relwidth=0.03, relheight=0.85)
 
-    def add_msg(self, people: Character, msg: str, is_main: bool):
-        new_msg = SingleChatMsg(
+    def add_msg_text(self, people: Character, msg: str, is_main: bool):
+        new_msg = SingleTextMsg(
             self.main_canvas, people, msg,
             0 if not self.messages else self.messages[-1].location[1],
             is_main
@@ -47,7 +61,17 @@ class ChatWindow:
         self.messages.append(new_msg)
         self.update_scroll()
 
-    def del_msg(self, msg: SingleChatMsg):
+    def add_msg_photo(self, people: Character, photo: io.BytesIO | io.BufferedIOBase, is_main: bool):
+        new_msg = SinglePhotoMsg(
+            self.main_canvas, people, photo,
+            0 if not self.messages else self.messages[-1].location[1],
+            is_main
+        )
+        new_msg.top_msg_delete = lambda: self.del_msg(new_msg)
+        self.messages.append(new_msg)
+        self.update_scroll()
+
+    def del_msg(self, msg: SingleTextMsg | SinglePhotoMsg):
         index = self.messages.index(msg)
         height = (
             (msg if index == len(self.messages) - 1 else self.messages[index + 1])
@@ -63,4 +87,4 @@ class ChatWindow:
             else:
                 omsg.to_sub()
         self.messages.remove(msg)
-        self.update_scroll() 
+        self.update_scroll()
