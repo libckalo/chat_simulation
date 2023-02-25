@@ -197,10 +197,10 @@ class SinglePhotoMsg:
         self.content = photo
         self._photo_pil = PIL.Image.open(photo)
         self._photo = PIL.ImageTk.PhotoImage(PIL.ImageOps.scale(
-            self._photo_pil, 200 / self._photo_pil.width
+            self._photo_pil, 400 / self._photo_pil.width
         ))
         self.msg_photo = root.create_image(
-            115,
+            120,
             location[1] + 20,
             anchor=tkinter.NW,
             image=self._photo,
@@ -256,7 +256,7 @@ class SinglePhotoMsg:
         self.root.itemconfigure(self.profile_photo, anchor=tkinter.NW)
         self.root.itemconfigure(self.name_label, anchor=tkinter.NW)
         self.root.itemconfigure(self.delete_button, anchor=tkinter.NW)
-        self.root.coords(self.msg_photo, 115, self._current_y + 20)
+        self.root.coords(self.msg_photo, 120, self._current_y + 20)
         self.root.coords(self.profile_photo, 0, self._current_y)
         self.root.coords(self.name_label, 105, self._current_y)
         self.root.coords(self.delete_button, width - 57, self._current_y + 25)
@@ -268,7 +268,7 @@ class SinglePhotoMsg:
         self.root.itemconfigure(self.profile_photo, anchor=tkinter.NE)
         self.root.itemconfigure(self.name_label, anchor=tkinter.NE)
         self.root.itemconfigure(self.delete_button, anchor=tkinter.NE)
-        self.root.coords(self.msg_photo, width - 115, self._current_y + 20)
+        self.root.coords(self.msg_photo, width - 120, self._current_y + 20)
         self.root.coords(self.profile_photo, width, self._current_y)
         self.root.coords(self.name_label, width - 105, self._current_y)
         self.root.coords(self.delete_button, 57, self._current_y + 25)

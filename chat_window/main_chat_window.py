@@ -1,4 +1,5 @@
 import tkinter
+import tkinter.messagebox
 import io
 from .single_chat_msg import SingleTextMsg, SinglePhotoMsg
 from ..databases.character_database import Character
@@ -17,6 +18,10 @@ class ChatWindow:
         self.main_canvas.bind("<MouseWheel>", self.scroll)
         self.main_canvas.configure(yscrollcommand=self.scroll_bar.set)
         self.messages = []
+        self.save_tool = None
+        self.char_selection_window = None
+        self.root = root
+        root.protocol("WM_DELETE_WINDOW", self.prompt_save_exit)
 
     def scroll(self, event: tkinter.Event):
         if event.num == 4 or event.delta == -120:
@@ -88,3 +93,20 @@ class ChatWindow:
                 omsg.to_sub()
         self.messages.remove(msg)
         self.update_scroll()
+
+    def prompt_save_exit(self):
+        # prompt only if there're any characters
+        # (messages depends on characters, so check only characters)
+        if self.char_selection_window.character_listbox.characters:
+            result = tkinter.messagebox.askyesnocancel(
+                "Save current chat?",
+                "You have added characters or messages.\n"
+                "Do you want to save current chat?"
+            )
+            if result is None: # cancelled
+                return
+            if result: # need to save
+                self.save_tool.save()
+
+        # either requested or not, so exit
+        self.root.destroy()

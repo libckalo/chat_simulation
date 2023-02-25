@@ -246,6 +246,7 @@ class CharSelectionWindow:
         )
         self.bottom_bar = None
         self.chat_window = chat_window
+        chat_window.char_selection_window = self
         self.main_char = []
 
     def hide_self(self):

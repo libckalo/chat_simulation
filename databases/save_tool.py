@@ -51,6 +51,7 @@ class SaveTool:
         self.save_menu.add_command(
             label="Save current chat...", command=self.save, underline=0
         )
+        chat_window.save_tool = self
 
     def save(self):
         try:

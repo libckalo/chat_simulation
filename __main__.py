@@ -17,7 +17,6 @@ def main(argc, argv):
     # recursive requirement
     chat_bottom_bar = ChatBottomBar(root, main_chat_window, char_selection_window)
     chat_bottom_bar.show()
-    char_selection_window.bottom_bar = chat_bottom_bar
     save_tool = SaveTool(root, char_selection_window, main_chat_window)
     root.mainloop()
 

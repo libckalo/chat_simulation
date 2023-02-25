@@ -9,7 +9,7 @@ from .main_chat_window import ChatWindow
 from ..databases.character_database import Character
 
 class ChatBottomBar:
-    def __init__(self, root: tkinter.Tk, main_chat_window: ChatWindow, char_selection_window):#: CharSelectionWindow):
+    def __init__(self, root: tkinter.Tk, main_chat_window: ChatWindow, char_selection_window):
         self.main_frame = tkinter.Frame(root)
         self.main_frame.bind("<Configure>", self.on_size_change)
         self.character_photo = None
@@ -33,12 +33,13 @@ class ChatBottomBar:
         self.character = None
         self.char_window_show = False
         self.is_main = False
+        char_selection_window.bottom_bar = self
 
     def on_size_change(self, event: tkinter.Event):
         self.character_photo_tkimage = self.character_photo_tkimage and (
             PIL.ImageTk.PhotoImage(
                 self.character_photo.resize(
-                    (int(event.width * 0.1), event.height),
+                    (event.width // 10, event.height),
                     PIL.Image.Resampling.BOX
                 )
             )
